@@ -7,7 +7,7 @@ import os
 import uuid
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS globally
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)  # Enable CORS globally
 
 def pdf_to_ppt(pdf_path, pptx_path='output.pptx', dpi=200):
     images = convert_from_path(pdf_path, dpi=dpi)
@@ -27,7 +27,11 @@ def pdf_to_ppt(pdf_path, pptx_path='output.pptx', dpi=200):
         os.remove(temp_image)
 
     prs.save(pptx_path)
-
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    return response
 @app.route('/convert', methods=['POST'])
 def convert_pdf():
     if 'file' not in request.files:
