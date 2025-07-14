@@ -9,7 +9,7 @@ import uuid
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)  # Enable CORS globally
 
-def pdf_to_ppt(pdf_path, pptx_path='output.pptx', dpi=200):
+def pdf_to_ppt(pdf_path, pptx_path='output.pptx', dpi=100):
     images = convert_from_path(pdf_path, dpi=dpi)
 
     prs = Presentation()
