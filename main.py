@@ -7,7 +7,7 @@ import os
 import uuid
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS globally
+CORS(app, origins=["https://pdf2pptxconverter.netlify.app"], supports_credentials=True)  # Enable CORS globally
 
 def pdf_to_ppt(pdf_path, pptx_path='output.pptx', dpi=200):
     images = convert_from_path(pdf_path, dpi=dpi)
