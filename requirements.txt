@@ -1,4 +1,5 @@
 gunicorn
+PyPDF2
 Flask
 flask-cors
 pdf2image

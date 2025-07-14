@@ -3,6 +3,7 @@ from flask_cors import CORS
 from pdf2image import convert_from_path
 from pptx import Presentation
 from pptx.util import Inches
+from PyPDF2 import PdfReader
 import os
 import uuid
 import threading
@@ -10,10 +11,8 @@ import threading
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
-# Simple in-memory task tracker
 tasks = {}
 
-# Convert PDF to PPT
 def pdf_to_ppt(task_id, pdf_path, pptx_path='output.pptx', dpi=200):
     reader = PdfReader(pdf_path)
     total_pages = len(reader.pages)
@@ -34,19 +33,21 @@ def pdf_to_ppt(task_id, pdf_path, pptx_path='output.pptx', dpi=200):
 
         os.remove(temp_image)
 
-        # ✅ Update progress after each page
+        # ✅ Update progress
         tasks[task_id]['status'] = f"converted {i}/{total_pages}"
 
     prs.save(pptx_path)
 
-# Background worker
 def convert_in_background(task_id, input_path, output_path):
     try:
         pdf_to_ppt(task_id, input_path, output_path)
         tasks[task_id]['status'] = 'done'
         tasks[task_id]['output_path'] = output_path
     except Exception as e:
-        tasks[task_id] = {'status': 'error', 'message': str(e)}
+        tasks[task_id] = {
+            'status': 'error',
+            'message': str(e)
+        }
     finally:
         if os.path.exists(input_path):
             os.remove(input_path)
@@ -58,7 +59,6 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
     return response
 
-# Step 1: Upload and start background conversion
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'file' not in request.files:
@@ -81,15 +81,13 @@ def upload():
 
     return jsonify({'task_id': task_id}), 202
 
-# Step 2: Check conversion status
 @app.route('/status/<task_id>', methods=['GET'])
 def status(task_id):
     task = tasks.get(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
-    return jsonify({'status': task['status']})
+    return jsonify(task)
 
-# Step 3: Download converted PPTX
 @app.route('/download/<task_id>', methods=['GET'])
 def download(task_id):
     task = tasks.get(task_id)
@@ -98,14 +96,12 @@ def download(task_id):
 
     output_path = task['output_path']
     if os.path.exists(output_path):
-        # Delete file after sending
         response = send_file(output_path, as_attachment=True)
         os.remove(output_path)
         del tasks[task_id]
         return response
     return jsonify({'error': 'Output file missing'}), 404
 
-# Main
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5001))
     app.run(host="0.0.0.0", port=port)
