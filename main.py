@@ -14,30 +14,37 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 tasks = {}
 
 # Convert PDF to PPT
-def pdf_to_ppt(pdf_path, pptx_path='output.pptx', dpi=150):
-    images = convert_from_path(pdf_path, dpi=dpi)
+def pdf_to_ppt(task_id, pdf_path, pptx_path='output.pptx', dpi=200):
+    reader = PdfReader(pdf_path)
+    total_pages = len(reader.pages)
 
     prs = Presentation()
     prs.slide_width = Inches(11.69)
     prs.slide_height = Inches(8.27)
 
-    for img in images:
+    for i in range(1, total_pages + 1):
+        images = convert_from_path(pdf_path, dpi=dpi, first_page=i, last_page=i)
+        img = images[0]
+
         temp_image = f'temp_{uuid.uuid4().hex}.png'
         img.save(temp_image, 'PNG')
 
-        slide_layout = prs.slide_layouts[6]
-        slide = prs.slides.add_slide(slide_layout)
+        slide = prs.slides.add_slide(prs.slide_layouts[6])
         slide.shapes.add_picture(temp_image, 0, 0, width=prs.slide_width, height=prs.slide_height)
 
         os.remove(temp_image)
+
+        # ✅ Update progress after each page
+        tasks[task_id]['status'] = f"converted {i}/{total_pages}"
 
     prs.save(pptx_path)
 
 # Background worker
 def convert_in_background(task_id, input_path, output_path):
     try:
-        pdf_to_ppt(input_path, output_path)
-        tasks[task_id] = {'status': 'done', 'output_path': output_path}
+        pdf_to_ppt(task_id, input_path, output_path)
+        tasks[task_id]['status'] = 'done'
+        tasks[task_id]['output_path'] = output_path
     except Exception as e:
         tasks[task_id] = {'status': 'error', 'message': str(e)}
     finally:
