@@ -14,7 +14,7 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 tasks = {}
 
 # Convert PDF to PPT
-def pdf_to_ppt(pdf_path, pptx_path='output.pptx', dpi=200):
+def pdf_to_ppt(pdf_path, pptx_path='output.pptx', dpi=150):
     images = convert_from_path(pdf_path, dpi=dpi)
 
     prs = Presentation()
