@@ -1,0 +1,5 @@
+Flask
+flask-cors
+pdf2image
+python-pptx
+python-pptx[dev]

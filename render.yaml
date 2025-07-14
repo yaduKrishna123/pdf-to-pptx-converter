@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: pdf-to-pptx-api
+    env: python
+    buildCommand: "./.render/build.sh"
+    startCommand: "gunicorn main:app"
+    plan: free
